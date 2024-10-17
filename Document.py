@@ -5,13 +5,11 @@
 # • texte : le contenu textuel du document
 from datetime import datetime
 
-from Author import Author
-
 
 class Document:
 
     title: str
-    author: Author # todo should be a list
+    author: "Author" # todo should be a list
     date: datetime.date
     url: str
     body: str

@@ -33,3 +33,10 @@ class Author:
         print(f"Name: {self.name}")
         print(f"Ndoc: {self.ndoc}")
         print(f"Production: {self.production}")
+
+    def stats(self):
+        print(f"Published {self.ndoc} publications")
+        text_sum = 0
+        for d in self.production:
+            text_sum += len(d.body)
+        print(f"average doc length: {text_sum/len(self.production)}")

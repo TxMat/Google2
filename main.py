@@ -1,3 +1,5 @@
+from typing import Dict, Any, Tuple
+
 import praw
 import urllib3
 import xmltodict
@@ -8,7 +10,7 @@ from Author import Author
 from Document import Document
 
 id2doc = {}
-id2aut = {}
+id2aut: dict[str, Author] = {}
 
 def reddit():
     reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
@@ -19,7 +21,9 @@ def reddit():
     for submission in reddit_client.subreddit("france").hot(limit=10):
         if submission.author.name not in id2aut:
             id2aut[submission.author.name] = Author(submission.author.name)
-        id2doc[f"red{key}"] = Document(submission.title, id2aut[submission.author.name], submission.created_utc, submission.url, submission.selftext)
+        doc: Document = Document(submission.title, id2aut[submission.author.name], submission.created_utc, submission.url, submission.selftext)
+        id2doc[f"red{key}"] = doc
+        id2aut[submission.author.name].add_document(doc)
         key+=1
 
 
@@ -40,7 +44,9 @@ def arxiv():
         if a not in id2aut:
             id2aut[a] = Author(a)
 
-        id2doc[f"arx{key}"] = Document(title, id2aut[a], articles['published'], articles['id'], txt)
+        doc = Document(title, id2aut[a], articles['published'], articles['id'], txt)
+        id2doc[f"arx{key}"] = doc
+        id2aut[a].add_document(doc)
         key+=1
 
 
@@ -49,6 +55,15 @@ def main():
     reddit()
     arxiv()
     print(id2doc)
+    d: Document
+    for d in id2doc.values():
+        print("##################")
+        d.pretty_print()
+        print("##################")
+        # d.author.pretty_print()
+        print("##################")
+        d.author.stats()
+        print("##################")
     # create dataframe
     # df = pd.DataFrame(corpus)
     # print(df)
