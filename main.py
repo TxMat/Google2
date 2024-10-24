@@ -28,7 +28,7 @@ def reddit():
 
 
 def arxiv():
-    resp = urllib3.request('GET', 'http://export.arxiv.org/api/query?search_query=all:electron&start=0&max_results=10')
+    resp = urllib3.request('GET', 'http://export.arxiv.org/api/query?search_query=all:electron&max_results=10')
     generated_dict = xmltodict.parse(resp.data)
 
     key = 0
