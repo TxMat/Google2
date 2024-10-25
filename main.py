@@ -21,7 +21,8 @@ def reddit():
     for submission in reddit_client.subreddit("france").hot(limit=10):
         if submission.author.name not in id2aut:
             id2aut[submission.author.name] = Author(submission.author.name)
-        doc: Document = Document(submission.title, id2aut[submission.author.name], submission.created_utc, submission.url, submission.selftext)
+        date = pd.to_datetime(int(submission.created_utc), utc=True, unit='s')
+        doc: Document = Document(submission.title, id2aut[submission.author.name], date, submission.url, submission.selftext)
         id2doc[f"red{key}"] = doc
         id2aut[submission.author.name].add_document(doc)
         key+=1
@@ -44,7 +45,8 @@ def arxiv():
         if a not in id2aut:
             id2aut[a] = Author(a)
 
-        doc = Document(title, id2aut[a], articles['published'], articles['id'], txt)
+        date = pd.to_datetime(articles['published'])
+        doc = Document(title, id2aut[a], date, articles['id'], txt)
         id2doc[f"arx{key}"] = doc
         id2aut[a].add_document(doc)
         key+=1
