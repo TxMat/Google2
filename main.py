@@ -20,7 +20,7 @@ def reddit():
     key = 0
     submission: Submission
     # todo sbr title should be a param
-    for submission in reddit_client.subreddit("linux").hot(limit=10):
+    for submission in reddit_client.subreddit("linux").hot(limit=100):
         if submission.author.name not in id2aut:
             id2aut[submission.author.name] = Author(submission.author.name)
         date = pd.to_datetime(int(submission.created_utc), utc=True, unit='s')
@@ -31,7 +31,7 @@ def reddit():
 
 
 def arxiv():
-    resp = urllib3.request('GET', 'http://export.arxiv.org/api/query?search_query=all:electron&max_results=10')
+    resp = urllib3.request('GET', 'http://export.arxiv.org/api/query?search_query=all:electron&max_results=100')
     generated_dict = xmltodict.parse(resp.data)
 
     key = 0
@@ -41,8 +41,13 @@ def arxiv():
         txt = articles['summary'].replace("\n", " ")
         if len(articles['author']) == 1:
             a = articles['author']["name"]
+        elif len(articles['author']) > 1:
+            if type(articles['author']) is list:
+                a = articles['author'][0]['name']
+            else:
+                a = "Cannot parse"
         else:
-            a = articles['author'][0]['name']
+            a = "Unknown"
 
         if a not in id2aut:
             id2aut[a] = Author(a)
@@ -56,10 +61,12 @@ def arxiv():
 
 
 def main():
-    reddit()
-    arxiv()
+    # reddit()
+    # arxiv()
+    #
+    # corpus = Corpus("corpus")
 
-    corpus = Corpus("corpus")
+    corpus = load_corpus()
 
     d: Document
     for d in id2doc.values():
@@ -68,10 +75,11 @@ def main():
     # print(corpus.search_regex("electron*.+"))
     # print(corpus.concordancer("electron").head())
     # print(corpus.stats())
-    # save_corpus(corpus)
+    save_corpus(corpus)
     google = SearchEngine(corpus)
-    a = google.search("fedora linux")
     print(google.search("fedora linux"))
+    a = google.better_search("fedora linux")
+    print(a[["Title", "Score", "URL"]])
 
 
 def save_corpus(corpus: Corpus):
@@ -80,6 +88,11 @@ def save_corpus(corpus: Corpus):
     with open("corpus.pkl", "wb") as f:
         pickle.dump(corpus, f)
 
+def load_corpus() -> Corpus:
+    import pickle
+
+    with open("corpus.pkl", "rb") as f:
+        return pickle.load(f)
 
 if __name__ == '__main__':
     main()

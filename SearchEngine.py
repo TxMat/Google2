@@ -1,4 +1,14 @@
+import numpy as np
 from pandas import DataFrame
+
+
+def cosine_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    magnitude1 = np.linalg.norm(vec1)
+    magnitude2 = np.linalg.norm(vec2)
+    if magnitude1 == 0 or magnitude2 == 0:
+        return 0
+    return dot_product / (magnitude1 * magnitude2)
 
 
 class SearchEngine:
@@ -49,5 +59,22 @@ class SearchEngine:
             if score > 0:
                 doc = self.corpus.id2doc[i+1]
                 results.append([doc.get_data(), score, doc.title, doc.author.name, doc.date, doc.url, doc.body])
+        results.sort(key=lambda x: x[1], reverse=True)
+        return DataFrame(results, columns=["Document", "Score", "Title", "Author", "Date", "URL", "Body"])
+
+    def better_search(self, query):
+        # transform query into vector
+        query_vector = np.array(self.get_vector(query))
+
+        # calculate similarity between query vector and all documents
+        results = []
+        for i in range(self.term_freq_matrix.shape[0]):
+            doc_vector = self.term_freq_matrix.getrow(i).toarray().flatten()
+            similarity = cosine_similarity(query_vector, doc_vector)
+            if similarity > 0:
+                doc = self.corpus.id2doc[i+1]
+                results.append([doc.get_data(), similarity, doc.title, doc.author.name, doc.date, doc.url, doc.body])
+
+        # sort results and display the best results
         results.sort(key=lambda x: x[1], reverse=True)
         return DataFrame(results, columns=["Document", "Score", "Title", "Author", "Date", "URL", "Body"])
