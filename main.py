@@ -70,8 +70,8 @@ def main():
     # print(corpus.stats())
     # save_corpus(corpus)
     google = SearchEngine(corpus)
-    a = google.search("electron")
-    print(google.search("electron"))
+    a = google.search("fedora linux")
+    print(google.search("fedora linux"))
 
 
 def save_corpus(corpus: Corpus):

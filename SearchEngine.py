@@ -47,7 +47,7 @@ class SearchEngine:
         results = []
         for i, score in enumerate(similarity):
             if score > 0:
-                doc = self.corpus.id2doc[i]
+                doc = self.corpus.id2doc[i+1]
                 results.append([doc.get_data(), score, doc.title, doc.author.name, doc.date, doc.url, doc.body])
         results.sort(key=lambda x: x[1], reverse=True)
         return DataFrame(results, columns=["Document", "Score", "Title", "Author", "Date", "URL", "Body"])
