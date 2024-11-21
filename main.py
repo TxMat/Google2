@@ -7,7 +7,9 @@ import pandas as pd
 from praw.models import Submission
 
 from Author import Author
+from Corpus import Corpus
 from Document import Document
+from SearchEngine import SearchEngine
 
 id2doc = {}
 id2aut: dict[str, Author] = {}
@@ -18,7 +20,7 @@ def reddit():
     key = 0
     submission: Submission
     # todo sbr title should be a param
-    for submission in reddit_client.subreddit("france").hot(limit=10):
+    for submission in reddit_client.subreddit("linux").hot(limit=10):
         if submission.author.name not in id2aut:
             id2aut[submission.author.name] = Author(submission.author.name)
         date = pd.to_datetime(int(submission.created_utc), utc=True, unit='s')
@@ -56,20 +58,27 @@ def arxiv():
 def main():
     reddit()
     arxiv()
-    print(id2doc)
+
+    corpus = Corpus("corpus")
+
     d: Document
     for d in id2doc.values():
-        print("##################")
-        d.pretty_print()
-        print("##################")
-        # d.author.pretty_print()
-        print("##################")
-        d.author.stats()
-        print("##################")
-    # create dataframe
-    # df = pd.DataFrame(corpus)
-    # print(df)
+        corpus.add(d)
 
+    # print(corpus.search_regex("electron*.+"))
+    # print(corpus.concordancer("electron").head())
+    # print(corpus.stats())
+    # save_corpus(corpus)
+    google = SearchEngine(corpus)
+    a = google.search("electron")
+    print(google.search("electron"))
+
+
+def save_corpus(corpus: Corpus):
+    import pickle
+
+    with open("corpus.pkl", "wb") as f:
+        pickle.dump(corpus, f)
 
 
 if __name__ == '__main__':

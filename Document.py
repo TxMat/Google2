@@ -1,8 +1,4 @@
-# titre : le titre du document
-# • auteur : le nom de l’auteur
-# • date : la date de publication
-# • url : l’url source
-# • texte : le contenu textuel du document
+# split into redditdoc and arkivdoc ??
 from datetime import datetime
 
 
@@ -22,6 +18,10 @@ class Document:
         self.date = date
         self.url = url
         self.body = body
+
+
+    def get_data(self):
+        return self.title + " " + self.author.name + " " + self.body
 
     def __str__(self) -> str:
         return f"{self.title} by {self.author.name}"
