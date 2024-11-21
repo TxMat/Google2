@@ -16,28 +16,17 @@ class SearchEngine:
     def __init__(self, corpus):
         self.term_freq_matrix = corpus.get_tf_matrix()
         self.vocab = corpus.get_vocab()
-        self.TFxIDF_matrix = None
+        self.TFxIDF_matrix = self.calculate_tfidf_matrix()
         self.corpus = corpus
 
-
-
-    # Afin de realiser votre moteur de recherche, les principales etapes sont les suivantes :
-    # • demander a l’utilisateur d’entrer quelques mots-clefs,
-    # • transformer ces mots-clefs sous la forme d’un vecteur sur le vocabulaire precedemment construit,
-    # • calculer une similarite entre votre vecteur requete et tous les documents,
-    # 1
-    # • trier les scores resultats et afficher les meilleurs resultats.
-    # La similarite peut etre calculee `a l’aide d’un simple produit scalaire entre le vecteur requete et le
-    # vecteur du texte vise. Une mesure qui est souvent plus appropriee est celle du cosinus (cf. https:
-    # //fr.wikipedia.org/wiki/Similarite_cosinus).
-
-    # Pour finir, vous devez integrer tout le code produit dans ce TD dans une classe intitulee SearchEngine.
-    # Cette classe doit respecter certaines contraintes :
-    # • On doit pouvoir donner un objet de type Corpus lorsqu’on instancie le moteur. La construction
-    # de la matrice Documents x Termes doit se faire dans la foulee.
-    # • La classe doit proposer une fonction search avec deux arguments : les mots clefs de la requete
-    # et le nombre de documents a retourner a l’utilisateur.
-    # • Le resultat de la recherche doit etre retournee sous la format d’une table DataFrame de pandas.
+    def calculate_tfidf_matrix(self):
+        # Calculate document frequency for each term
+        doc_freq = np.bincount(self.term_freq_matrix.indices, minlength=self.term_freq_matrix.shape[1])
+        # Calculate inverse document frequency
+        idf = np.log((1 + self.term_freq_matrix.shape[0]) / (1 + doc_freq)) + 1
+        # Calculate TF-IDF matrix
+        tfidf_matrix = self.term_freq_matrix.multiply(idf)
+        return tfidf_matrix
 
     def get_vector(self, query):
         # transform query into vector
@@ -66,10 +55,17 @@ class SearchEngine:
         # transform query into vector
         query_vector = np.array(self.get_vector(query))
 
+        # Calculate document frequency for the query terms
+        doc_freq = np.bincount(self.term_freq_matrix.indices, minlength=self.term_freq_matrix.shape[1])
+        idf = np.log((1 + self.term_freq_matrix.shape[0]) / (1 + doc_freq)) + 1
+
+        # Adjust the query vector using the inverse document frequency
+        query_vector = query_vector * idf
+
         # calculate similarity between query vector and all documents
         results = []
-        for i in range(self.term_freq_matrix.shape[0]):
-            doc_vector = self.term_freq_matrix.getrow(i).toarray().flatten()
+        for i in range(self.TFxIDF_matrix.shape[0]):
+            doc_vector = self.TFxIDF_matrix.getrow(i).toarray().flatten()
             similarity = cosine_similarity(query_vector, doc_vector)
             if similarity > 0:
                 doc = self.corpus.id2doc[i+1]
