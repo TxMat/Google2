@@ -17,9 +17,8 @@ class SearchEngine:
     def __init__(self, corpus):
         self.term_freq_matrix = corpus.get_tf_matrix()
         self.vocab = corpus.get_vocab()
-        self.TFxIDF_matrix = self.calculate_tfidf_matrix()
         self.corpus = corpus
-        self.doc_vectors = self.TFxIDF_matrix.toarray()  # Precompute document vectors
+        self.doc_vectors = self.calculate_tfidf_matrix().toarray()  # Precompute document vectors
 
     def calculate_tfidf_matrix(self):
         # Calculate document frequency for each term
