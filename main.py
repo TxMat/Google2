@@ -14,14 +14,16 @@ from SearchEngine import SearchEngine
 id2doc = {}
 id2aut: dict[str, Author] = {}
 
-def reddit():
+BUILD_CORPUS = True
+
+def reddit(subject : str, nb_doc: int):
     reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
                                 user_agent='search_engine_td')
     key = 0
     submission: Submission
     # todo sbr title should be a param
-    for submission in reddit_client.subreddit("linux").hot(limit=100):
-        if submission.author.name not in id2aut:
+    for submission in reddit_client.subreddit(subject).hot(limit=nb_doc):
+        if submission.author and submission.author.name not in id2aut:
             id2aut[submission.author.name] = Author(submission.author.name)
         date = pd.to_datetime(int(submission.created_utc), utc=True, unit='s')
         doc: Document = Document(submission.title, id2aut[submission.author.name], date, submission.url, submission.selftext)
@@ -30,8 +32,8 @@ def reddit():
         key+=1
 
 
-def arxiv():
-    resp = urllib3.request('GET', 'http://export.arxiv.org/api/query?search_query=all:electron&max_results=100')
+def arxiv(subject: str, nb_doc: int):
+    resp = urllib3.request('GET', f'http://export.arxiv.org/api/query?search_query=all:{subject}&max_results={nb_doc}')
     generated_dict = xmltodict.parse(resp.data)
 
     key = 0
@@ -59,27 +61,29 @@ def arxiv():
         key+=1
 
 
-
-def main():
-    # reddit()
-    # arxiv()
-    #
-    # corpus = Corpus("corpus")
-
-    corpus = load_corpus()
+def build_corpus(subject : str, nb: int) -> Corpus:
+    corpus = Corpus("corpus")
+    reddit(subject, nb)
+    arxiv(subject, nb)
 
     d: Document
     for d in id2doc.values():
         corpus.add(d)
 
-    # print(corpus.search_regex("electron*.+"))
-    # print(corpus.concordancer("electron").head())
-    # print(corpus.stats())
-    save_corpus(corpus)
-    google = SearchEngine(corpus)
-    print(google.search("fedora linux"))
-    a = google.better_search("fedora linux")
-    print(a[["Title", "Score", "URL"]])
+    return corpus
+
+def get_search_engine(corpus: Corpus) -> SearchEngine:
+    return SearchEngine(corpus)
+
+
+def main() -> SearchEngine:
+    if BUILD_CORPUS :
+        corpus = build_corpus("france", 100)
+        save_corpus(corpus)
+    else:
+        corpus = load_corpus()
+
+    return get_search_engine(corpus)
 
 
 def save_corpus(corpus: Corpus):

@@ -19,7 +19,7 @@ class Corpus:
     def __init__(self, nom):
         self.nom = nom
         self.authors = {}
-        self.aut2id = {}
+        self.aut2id = {} # todo id to author instead
         self.id2doc = {}
         self.cached_doc_string_list = ""
         self.ndoc = 0
