@@ -1,2 +1,0 @@
-class Singleton(object):
-    pass

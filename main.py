@@ -81,7 +81,7 @@ def get_search_engine(corpus: Corpus) -> SearchEngine:
     return SearchEngine(corpus)
 
 def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
-    coloredlogs.install(level='DEBUG')
+    coloredlogs.install(level='INFO')
     start_time = time.time()
     if should_build_corpus:
         logger.info("Building corpus")
