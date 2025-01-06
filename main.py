@@ -80,8 +80,14 @@ def us_speeches_import():
 
 def build_corpus(subject : str, nb: int) -> Corpus:
     corpus = Corpus("Main Corpus")
-    reddit_import(subject, nb)
-    arxiv_import(subject, nb)
+    try:
+        reddit_import(subject, nb)
+    except Exception as e:
+        print(f"Error while importing reddit data: {e}, check that the subreddit exists")
+    try:
+        arxiv_import(subject, nb)
+    except Exception as e:
+        print(f"Error while importing arxiv data: {e}")
     us_speeches_import()
 
     d: Document
