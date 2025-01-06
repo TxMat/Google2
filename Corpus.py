@@ -102,6 +102,12 @@ class Corpus:
 
         return freq_df
 
+    def get_distinct_sources_list(self):
+        sources = set()
+        for doc in self.id2doc.values():
+            sources.add(doc.source)
+        return list(sources)
+
     def get_vocab(self):
         if self.cached_doc_string_list == "":
             self.refresh_cache()

@@ -9,15 +9,15 @@ class Document:
     date: datetime.date
     url: str
     body: str
+    source: str
 
-    # todo source ?
-
-    def __init__(self, title, author, date, url, body) -> None:
+    def __init__(self, title, author, date, url, body, source) -> None:
         self.title = title
         self.author = author
         self.date = date
         self.url = url
         self.body = body
+        self.source = source
 
 
     def get_data(self):

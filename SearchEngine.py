@@ -2,6 +2,8 @@ import numpy as np
 from pandas import DataFrame
 from tqdm import tqdm
 
+from Corpus import Corpus
+
 
 def cosine_similarity(vec1, vec2):
     dot_product = np.dot(vec1, vec2)
@@ -14,7 +16,7 @@ def cosine_similarity(vec1, vec2):
 
 class SearchEngine:
 
-    def __init__(self, corpus):
+    def __init__(self, corpus : Corpus):
         self.term_freq_matrix = corpus.get_tf_matrix()
         self.vocab = corpus.get_vocab()
         self.corpus = corpus
@@ -38,7 +40,9 @@ class SearchEngine:
                 query_vector[self.vocab.index(term)] += 1
         return np.array(query_vector)
 
-    def search(self, query):
+    def basic_search(self, query, source_list=None):
+        if source_list is None:
+            source_list = []
         # transform query into vector
         query_vector = self.get_vector(query)
         # calculate similarity between query vector and all documents
@@ -46,13 +50,17 @@ class SearchEngine:
         # sort results and display the best results
         results = []
         for i, score in tqdm(enumerate(similarity), ascii=True, desc="Searching"):
+            if source_list and self.corpus.id2doc[i + 1].source not in source_list:
+                continue
             if score > 0:
                 doc = self.corpus.id2doc[i+1]
                 results.append([doc.body, score, doc.title, doc.author.name, doc.date, doc.url, doc.get_data()])
         results.sort(key=lambda x: x[1], reverse=True)
         return DataFrame(results, columns=["Body", "Score", "Title", "Author", "Date", "URL", "Document"])
 
-    def better_search(self, query):
+    def advanced_search(self, query, source_list=None):
+        if source_list is None:
+            source_list = []
         # transform query into vector
         query_vector = self.get_vector(query)
 
@@ -67,6 +75,8 @@ class SearchEngine:
         query_vector_norm = np.linalg.norm(query_vector)
         results = []
         for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (better)"):
+            if source_list and self.corpus.id2doc[i + 1].source not in source_list:
+                continue
             doc_vector = self.doc_vectors[i]
             similarity = np.dot(query_vector, doc_vector) / (query_vector_norm * np.linalg.norm(doc_vector))
             if similarity > 0:
@@ -78,13 +88,17 @@ class SearchEngine:
         return DataFrame(results, columns=["Body", "Score", "Title", "Author", "Date", "URL", "Document"])
 
 
-    def better_search_v2(self, query, k=1.5, b=0.65):
+    def bm25_search(self, query, k=1.5, b=0.65, source_list=None):
+        if source_list is None:
+            source_list = []
         query_vector = self.get_vector(query)
         idf = np.log((1 + self.term_freq_matrix.shape[0]) / (1 + np.bincount(self.term_freq_matrix.indices))) + 1
         avg_doc_length = np.mean([len(doc.body.split()) for doc in self.corpus.id2doc.values()])
         results = []
 
         for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (even better ??)"):
+            if source_list and self.corpus.id2doc[i + 1].source not in source_list:
+                continue
             doc_vector = self.doc_vectors[i]
             doc_length = len(self.corpus.id2doc[i + 1].body.split())
             similarity = bm25_score(query_vector, doc_vector, idf, doc_length, avg_doc_length, k, b)
@@ -94,6 +108,9 @@ class SearchEngine:
 
         results.sort(key=lambda x: x[1], reverse=True)
         return DataFrame(results, columns=["Body", "Score", "Title", "Author", "Date", "URL", "Document"])
+
+    def get_distinct_sources_list(self):
+        return self.corpus.get_distinct_sources_list()
 
 
 def bm25_score(query_vector, doc_vector, idf, doc_length, avg_doc_length, k, b):
