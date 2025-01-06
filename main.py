@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Any, Tuple
 
 import praw
@@ -11,8 +12,12 @@ from Corpus import Corpus
 from Document import Document
 from SearchEngine import SearchEngine
 
+import coloredlogs, logging
+
 id2doc = {}
 id2aut: dict[str, Author] = {}
+
+logger = logging.getLogger(__name__)
 
 def reddit_import(subject : str, nb_doc: int):
     reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
@@ -101,12 +106,19 @@ def get_search_engine(corpus: Corpus) -> SearchEngine:
 
 
 def init(subject: str, nb : int, should_build_corpus: bool) -> SearchEngine:
+    coloredlogs.install(level='DEBUG')
+    start_time = time.time()
     if should_build_corpus :
+        logger.info("Building corpus")
         corpus = build_corpus(subject, nb)
         save_corpus(corpus)
     else:
+        logger.warning("should_build_corpus is set to False, loading corpus from file")
         corpus = load_corpus()
 
+    logger.info(f"Corpus built in {round(time.time() - start_time, 2)} seconds")
+    logger.info("Corpus stats:")
+    print(corpus.stats())
     return get_search_engine(corpus)
 
 
@@ -123,4 +135,4 @@ def load_corpus() -> Corpus:
         return pickle.load(f)
 
 if __name__ == '__main__':
-    init("usa", 100, True)
+    init("usa", 100, False)

@@ -8,7 +8,6 @@ from Document import Document
 
 
 class Corpus:
-
     nom: str
     authors: dict[int, Author]
     id2doc: dict[int, Document]
@@ -19,15 +18,15 @@ class Corpus:
     def __init__(self, nom):
         self.nom = nom
         self.authors = {}
-        self.aut2id = {} # todo id to author instead
+        self.aut2id = {}  # todo id to author instead
         self.id2doc = {}
         self.cached_doc_string_list = ""
         self.ndoc = 0
         self.naut = 0
 
-
     doc: Document
-    def add(self, doc):
+
+    def add(self, doc: Document):
         if doc.author not in self.aut2id:
             self.naut += 1
             self.authors[self.naut] = Author(doc.author)
@@ -41,7 +40,7 @@ class Corpus:
     def refresh_cache(self):
         self.cached_doc_string_list = "\n".join([doc.get_data() for doc in self.id2doc.values()])
 
-    def search_regex(self, query):
+    def search_regex(self, query: str):
         if not self.cached_doc_string_list:
             self.refresh_cache()
         return re.findall(query, self.cached_doc_string_list)
@@ -61,14 +60,12 @@ class Corpus:
 
         return DataFrame(result, columns=["left context", "word", "right context"])
 
-
     @staticmethod
-    def clean_text(text):
+    def clean_text(text: str):
         text = text.lower()
         text = text.replace("\n", " ")
         text = re.sub(r"[^a-zà-ÿ@]", " ", text)
         return text
-
 
     def stats(self):
         if self.cached_doc_string_list == "":
@@ -158,8 +155,3 @@ class Corpus:
         docs = list(sorted(docs, key=lambda x: x.titre.lower()))
 
         return "\n".join(list(map(str, docs)))
-
-
-
-
-
