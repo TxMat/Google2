@@ -3,10 +3,6 @@ from typing import List
 from Document import Document
 
 
-# • name : son nom
-# • ndoc : nombre de documents publi´es
-# • production : un dictionnaire des documents ´ecrits par l’auteur
-
 class Author:
     name: str
     ndoc: int
@@ -39,4 +35,4 @@ class Author:
         text_sum = 0
         for d in self.production:
             text_sum += len(d.body)
-        print(f"average doc length: {text_sum/len(self.production)}")
+        print(f"average doc length: {text_sum / len(self.production)}")

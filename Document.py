@@ -1,4 +1,3 @@
-# split into redditdoc and arkivdoc ??
 from datetime import datetime
 
 

@@ -1,23 +1,34 @@
-import time
 import logging
+import time
 from typing import Dict
+
+import coloredlogs
+import pandas as pd
 import praw
 import urllib3
 import xmltodict
-import pandas as pd
-from praw.models import Submission
+
 from Author import Author
 from Corpus import Corpus
 from Document import Document
 from SearchEngine import SearchEngine
-import coloredlogs
 
+# Dictionary to store documents with their IDs
 id2doc = {}
+# Dictionary to store authors with their IDs
 id2aut: Dict[str, Author] = {}
 
+# Logger setup
 logger = logging.getLogger(__name__)
 
 def reddit_import(subject: str, nb_doc: int):
+    """
+    Imports documents from a specified subreddit.
+
+    Args:
+        subject (str): The subreddit to import from.
+        nb_doc (int): The number of documents to import.
+    """
     reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ', user_agent='search_engine_td')
     for key, submission in enumerate(reddit_client.subreddit(subject).hot(limit=nb_doc)):
         author_name = submission.author.name if submission.author else "Unknown"
@@ -29,6 +40,13 @@ def reddit_import(subject: str, nb_doc: int):
         id2aut[author_name].add_document(doc)
 
 def arxiv_import(subject: str, nb_doc: int):
+    """
+    Imports documents from arXiv based on a search query.
+
+    Args:
+        subject (str): The search query for arXiv.
+        nb_doc (int): The number of documents to import.
+    """
     resp = urllib3.request('GET', f'http://export.arxiv.org/api/query?search_query=all:{subject}&max_results={nb_doc}')
     articles = xmltodict.parse(resp.data)['feed']['entry']
     for key, article in enumerate(articles):
@@ -43,6 +61,9 @@ def arxiv_import(subject: str, nb_doc: int):
         id2aut[author_name].add_document(doc)
 
 def us_speeches_import():
+    """
+    Imports US speeches from a CSV file.
+    """
     us_data = pd.read_csv("data/discours_US.csv", sep="\t")
 
     counter = 0
@@ -61,26 +82,55 @@ def us_speeches_import():
             id2doc[f"us{counter}"] = doc
             counter += 1
 
-
 def build_corpus(subject: str, nb: int) -> Corpus:
+    """
+    Builds a corpus by importing documents from various sources.
+
+    Args:
+        subject (str): The subject to search for.
+        nb (int): The number of documents to import from each source.
+
+    Returns:
+        Corpus: The built corpus containing all imported documents.
+    """
     corpus = Corpus("Main Corpus")
     try:
         reddit_import(subject, nb)
     except Exception as e:
-        print(f"Error while importing reddit data: {e}, check that the subreddit exists")
+        logger.error(f"Error while importing reddit data: {e}, check that the subreddit exists")
     try:
         arxiv_import(subject, nb)
     except Exception as e:
-        print(f"Error while importing arxiv data: {e}")
+        logger.error(f"Error while importing arxiv data: {e}")
     us_speeches_import()
     for doc in id2doc.values():
         corpus.add(doc)
     return corpus
 
 def get_search_engine(corpus: Corpus) -> SearchEngine:
+    """
+    Initializes a search engine with the given corpus.
+
+    Args:
+        corpus (Corpus): The corpus to use for the search engine.
+
+    Returns:
+        SearchEngine: The initialized search engine.
+    """
     return SearchEngine(corpus)
 
 def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
+    """
+    Initializes the search engine, either by building a new corpus or loading an existing one.
+
+    Args:
+        subject (str): The subject to search for.
+        nb (int): The number of documents to import from each source.
+        should_build_corpus (bool): Whether to build a new corpus or load an existing one.
+
+    Returns:
+        SearchEngine: The initialized search engine.
+    """
     coloredlogs.install(level='INFO')
     start_time = time.time()
     if should_build_corpus:
@@ -96,11 +146,23 @@ def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
     return get_search_engine(corpus)
 
 def save_corpus(corpus: Corpus):
+    """
+    Saves the corpus to a file.
+
+    Args:
+        corpus (Corpus): The corpus to save.
+    """
     import pickle
     with open("corpus.pkl", "wb") as f:
         pickle.dump(corpus, f)
 
 def load_corpus() -> Corpus:
+    """
+    Loads the corpus from a file.
+
+    Returns:
+        Corpus: The loaded corpus.
+    """
     import pickle
     with open("corpus.pkl", "rb") as f:
         return pickle.load(f)
