@@ -49,7 +49,7 @@ class SearchEngine:
         similarity = self.term_freq_matrix.dot(query_vector)
         # sort results and display the best results
         results = []
-        for i, score in tqdm(enumerate(similarity), ascii=True, desc="Searching"):
+        for i, score in tqdm(enumerate(similarity), ascii=True, desc="Searching (Basic)"):
             if source_list and self.corpus.id2doc[i + 1].source not in source_list:
                 continue
             if score > 0:
@@ -74,7 +74,7 @@ class SearchEngine:
         # calculate similarity between query vector and all documents
         query_vector_norm = np.linalg.norm(query_vector)
         results = []
-        for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (better)"):
+        for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (Advanced)"):
             if source_list and self.corpus.id2doc[i + 1].source not in source_list:
                 continue
             doc_vector = self.doc_vectors[i]
@@ -96,7 +96,7 @@ class SearchEngine:
         avg_doc_length = np.mean([len(doc.body.split()) for doc in self.corpus.id2doc.values()])
         results = []
 
-        for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (even better ??)"):
+        for i in tqdm(range(self.doc_vectors.shape[0]), ascii=True, desc="Searching (BM25)"):
             if source_list and self.corpus.id2doc[i + 1].source not in source_list:
                 continue
             doc_vector = self.doc_vectors[i]
