@@ -94,7 +94,7 @@ def get_search_engine(corpus: Corpus) -> SearchEngine:
     return SearchEngine(corpus)
 
 
-def main(subject: str, nb : int, should_build_corpus: bool) -> SearchEngine:
+def init(subject: str, nb : int, should_build_corpus: bool) -> SearchEngine:
     if should_build_corpus :
         corpus = build_corpus(subject, nb)
         save_corpus(corpus)
@@ -117,4 +117,4 @@ def load_corpus() -> Corpus:
         return pickle.load(f)
 
 if __name__ == '__main__':
-    main()
+    init("usa", 100, True)
