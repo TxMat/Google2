@@ -35,6 +35,10 @@ You can also exclude sources from the search by unchecking the concerned checkbo
 When in simple output mode,
 the results will be displayed in a simplified table with only the body and the score of the document.
 
+__Note__ : The search engine ONLY searches in the body of the documents.
+The title and the URL are not taken into account.
+This means that reddit posts that are images or videos will not be found by the search engine.
+
 ## Tweaking
 
 ### Search Algorithm Strength
