@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 import time
 from typing import Dict, List
@@ -21,6 +22,9 @@ id2aut: Dict[str, Author] = {}
 # Logger setup
 logger = logging.getLogger(__name__)
 
+reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
+                            user_agent='search_engine_td')
+
 
 def reddit_import(subject: str, nb_doc: int):
     """
@@ -30,8 +34,6 @@ def reddit_import(subject: str, nb_doc: int):
         subject (str): The subreddit to import from.
         nb_doc (int): The number of documents to import.
     """
-    reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
-                                user_agent='search_engine_td')
     for key, submission in enumerate(reddit_client.subreddit(subject).hot(limit=nb_doc)):
         author_name = submission.author.name if submission.author else "Unknown"
         if author_name not in id2aut:
@@ -98,31 +100,36 @@ def build_corpus(subject: List[str], nb: int) -> Corpus:
     Returns:
         Corpus: The built corpus containing all imported documents.
     """
-    error = False
     corpus = Corpus("Main Corpus")
     if not subject:
         logger.error("No subject provided, exiting")
         exit(1)
-    for sub in subject:
-        logger.info(f"now retrieving data for {sub}")
-        logger.info("fetching data from reddit")
+
+    def import_reddit_data(sub):
         try:
+            logger.info(f"Fetching data for {sub} from reddit")
             reddit_import(sub, nb)
-            logger.info("success")
+            logger.info("Success")
         except Exception as e:
-            logger.error(f"Error while importing reddit data: {e}, check that the subreddit exists")
-            error = True
-        logger.info("fetching data from arxiv")
+            logger.error(f"Error while importing reddit data for {sub}: {e}")
+
+    def import_arxiv_data(sub):
         try:
+            logger.info(f"Fetching data for {sub} from arxiv")
             arxiv_import(sub, nb)
-            logger.info("success")
+            logger.info("Success")
         except Exception as e:
-            logger.error(f"Error while importing arxiv data: {e}")
-            error = True
-    logger.info("importing US speeches data")
+            logger.error(f"Error while importing arxiv data for {sub}: {e}")
+
+    # Multithreading to speed up the process because we can :)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        for s in subject:
+            executor.submit(import_reddit_data, s)
+            executor.submit(import_arxiv_data, s)
+
+    logger.info("Importing US speeches data")
     us_speeches_import()
-    if error:
-        logger.critical("An error occurred while fetching data, please check your subject list and the logs")
+
     for doc in id2doc.values():
         corpus.add(doc)
     return corpus
@@ -207,4 +214,4 @@ def load_corpus() -> Corpus:
 
 
 if __name__ == '__main__':
-    init(["usa", "covid19"], 100, True)
+    init(["usa", "covid19", "physics", "electron"], 100, True)
