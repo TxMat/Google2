@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Dict
+from typing import Dict, List
 
 import coloredlogs
 import pandas as pd
@@ -21,6 +21,7 @@ id2aut: Dict[str, Author] = {}
 # Logger setup
 logger = logging.getLogger(__name__)
 
+
 def reddit_import(subject: str, nb_doc: int):
     """
     Imports documents from a specified subreddit.
@@ -29,7 +30,8 @@ def reddit_import(subject: str, nb_doc: int):
         subject (str): The subreddit to import from.
         nb_doc (int): The number of documents to import.
     """
-    reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ', user_agent='search_engine_td')
+    reddit_client = praw.Reddit(client_id='T9qPLZ2H3esl_ukXzn0UVA', client_secret='zyGz9sEs67D0LB3Ihu3kia_3oq0KlQ',
+                                user_agent='search_engine_td')
     for key, submission in enumerate(reddit_client.subreddit(subject).hot(limit=nb_doc)):
         author_name = submission.author.name if submission.author else "Unknown"
         if author_name not in id2aut:
@@ -38,6 +40,7 @@ def reddit_import(subject: str, nb_doc: int):
         doc = Document(submission.title, id2aut[author_name], date, submission.url, submission.selftext, "reddit")
         id2doc[f"red{key}"] = doc
         id2aut[author_name].add_document(doc)
+
 
 def arxiv_import(subject: str, nb_doc: int):
     """
@@ -59,6 +62,7 @@ def arxiv_import(subject: str, nb_doc: int):
         doc = Document(title, id2aut[author_name], date, article['id'], summary, "arxiv")
         id2doc[f"arx{key}"] = doc
         id2aut[author_name].add_document(doc)
+
 
 def us_speeches_import():
     """
@@ -82,30 +86,47 @@ def us_speeches_import():
             id2doc[f"us{counter}"] = doc
             counter += 1
 
-def build_corpus(subject: str, nb: int) -> Corpus:
+
+def build_corpus(subject: List[str], nb: int) -> Corpus:
     """
     Builds a corpus by importing documents from various sources.
 
     Args:
-        subject (str): The subject to search for.
+        subject (List[str]): The subject(s) to search for.
         nb (int): The number of documents to import from each source.
 
     Returns:
         Corpus: The built corpus containing all imported documents.
     """
+    error = False
     corpus = Corpus("Main Corpus")
-    try:
-        reddit_import(subject, nb)
-    except Exception as e:
-        logger.error(f"Error while importing reddit data: {e}, check that the subreddit exists")
-    try:
-        arxiv_import(subject, nb)
-    except Exception as e:
-        logger.error(f"Error while importing arxiv data: {e}")
+    if not subject:
+        logger.error("No subject provided, exiting")
+        exit(1)
+    for sub in subject:
+        logger.info(f"now retrieving data for {sub}")
+        logger.info("fetching data from reddit")
+        try:
+            reddit_import(sub, nb)
+            logger.info("success")
+        except Exception as e:
+            logger.error(f"Error while importing reddit data: {e}, check that the subreddit exists")
+            error = True
+        logger.info("fetching data from arxiv")
+        try:
+            arxiv_import(sub, nb)
+            logger.info("success")
+        except Exception as e:
+            logger.error(f"Error while importing arxiv data: {e}")
+            error = True
+    logger.info("importing US speeches data")
     us_speeches_import()
+    if error:
+        logger.critical("An error occurred while fetching data, please check your subject list and the logs")
     for doc in id2doc.values():
         corpus.add(doc)
     return corpus
+
 
 def get_search_engine(corpus: Corpus) -> SearchEngine:
     """
@@ -119,12 +140,13 @@ def get_search_engine(corpus: Corpus) -> SearchEngine:
     """
     return SearchEngine(corpus)
 
-def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
+
+def init(subject: List[str] | str, nb: int, should_build_corpus: bool) -> SearchEngine:
     """
     Initializes the search engine, either by building a new corpus or loading an existing one.
 
     Args:
-        subject (str): The subject to search for.
+        subject (List[str] | str): The subject(s) to search for.
         nb (int): The number of documents to import from each source.
         should_build_corpus (bool): Whether to build a new corpus or load an existing one.
 
@@ -135,6 +157,20 @@ def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
     start_time = time.time()
     if should_build_corpus:
         logger.info("Building corpus")
+        if nb < 1:
+            logger.error("Number of documents to fetch must be greater than 0, exiting")
+            exit(1)
+        if isinstance(subject, str):
+            subject = [subject]
+        # Clean the subject list
+        subject = [s.lower().strip() for s in subject if s.strip()]
+        if not subject:
+            logger.error("No subject provided, exiting")
+            exit(1)
+        if len(subject) == 1:
+            logger.info(f"Fetching {nb} documents from each source for {subject[0]}")
+        else:
+            logger.info(f"Fetching {nb} documents from each source for each {len(subject)} subjects")
         corpus = build_corpus(subject, nb)
         save_corpus(corpus)
     else:
@@ -144,6 +180,7 @@ def init(subject: str, nb: int, should_build_corpus: bool) -> SearchEngine:
     logger.info("Corpus stats:")
     print(corpus.stats())
     return get_search_engine(corpus)
+
 
 def save_corpus(corpus: Corpus):
     """
@@ -156,6 +193,7 @@ def save_corpus(corpus: Corpus):
     with open("corpus.pkl", "wb") as f:
         pickle.dump(corpus, f)
 
+
 def load_corpus() -> Corpus:
     """
     Loads the corpus from a file.
@@ -167,5 +205,6 @@ def load_corpus() -> Corpus:
     with open("corpus.pkl", "rb") as f:
         return pickle.load(f)
 
+
 if __name__ == '__main__':
-    init("usa", 100, False)
+    init(["usa", "covid19"], 100, True)
