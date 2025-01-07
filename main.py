@@ -40,7 +40,7 @@ def reddit_import(subject: str, nb_doc: int):
             id2aut[author_name] = Author(author_name)
         date = pd.to_datetime(int(submission.created_utc), utc=True, unit='s')
         doc = Document(submission.title, id2aut[author_name], date, submission.url, submission.selftext, "reddit")
-        id2doc[f"red{key}"] = doc
+        id2doc[f"red{key}-{subject}"] = doc
         id2aut[author_name].add_document(doc)
 
 
@@ -62,7 +62,7 @@ def arxiv_import(subject: str, nb_doc: int):
             id2aut[author_name] = Author(author_name)
         date = pd.to_datetime(article['published'])
         doc = Document(title, id2aut[author_name], date, article['id'], summary, "arxiv")
-        id2doc[f"arx{key}"] = doc
+        id2doc[f"arx{key}-{subject}"] = doc
         id2aut[author_name].add_document(doc)
 
 
@@ -214,4 +214,5 @@ def load_corpus() -> Corpus:
 
 
 if __name__ == '__main__':
-    init(["usa", "covid19", "physics", "electron"], 100, True)
+    a = init(["usa", "covid19", "stocks", "homeowners"], 100, True)
+    print(a)
