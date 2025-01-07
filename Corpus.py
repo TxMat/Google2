@@ -101,7 +101,7 @@ class Corpus:
             str: The cleaned text.
         """
         text = text.lower().replace("\n", " ")
-        return re.sub(r"[^a-zà-ÿ@]", " ", text)
+        return re.sub(r"[^a-zà-ÿ@^\s]", " ", text).strip()
 
     def stats(self):
         """
@@ -171,7 +171,7 @@ class Corpus:
             n_docs (int, optional): The number of documents to display. Defaults to -1 (all documents).
             tri (str, optional): The sorting criterion ("abc" for alphabetical, otherwise by date). Defaults to "abc".
         """
-        docs = sorted(self.id2doc.values(), key=lambda x: x.titre.lower() if tri == "abc" else x.date)[:n_docs]
+        docs = sorted(self.id2doc.values(), key=lambda x: x.title.lower() if tri == "abc" else x.date)[:n_docs]
         print("\n".join(map(repr, docs)))
 
     def __repr__(self):
@@ -181,4 +181,4 @@ class Corpus:
         Returns:
             str: A string representation of the corpus.
         """
-        return "\n".join(map(str, sorted(self.id2doc.values(), key=lambda x: x.titre.lower())))
+        return "\n".join(map(str, sorted(self.id2doc.values(), key=lambda x: x.title.lower())))
