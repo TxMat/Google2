@@ -42,18 +42,16 @@ the results will be displayed in a simplified table with only the body and the s
 When in BM25 mode (strength 3),
 you can tweak the parameters of the algorithm by changing the values of the following variables:
 
-1. `k` : The term frequency saturation parameter
-2. `b` : The length normalization parameter
++ `k` : The term frequency saturation parameter
++ `b` : The length normalization parameter
 
 I'd recommend keeping the default values for the best overall results, but feel free to experiment with them.
 
 ### Corpus
 
-by default,
-the corpus is constructed from reddit and arxiv post using the SUBJECTS variable in the first cell of the notebook.
-
-You can change the value of this variable to a list of any other subreddit or arxiv category
-to get results from different sources.
++ `SUBJECTS` : The sources to fetch the documents from in form of a list of strings.
++ `NUMBER` : The number of documents to fetch from each source.
++ `BUILD_CORPUS` : A boolean variable to determine whether to fetch the documents from the sources or to use the pre-built corpus.
 
 ## License
 
